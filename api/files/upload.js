@@ -1,42 +1,40 @@
+import formidable from 'formidable';
+import { readFile } from 'fs/promises';
 import { uploadToS3 } from '../_lib/s3.js';
 import { insertFile, toClientFormat } from '../_lib/db.js';
 
-export const config = { runtime: 'edge' };
+export const config = { api: { bodyParser: false } };
 
 function sanitizeFilename(name) {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 200);
 }
 
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const formData = await request.formData();
-    const file = formData.get('file');
-    const displayName = formData.get('displayName');
-    const userName = formData.get('userName') || 'Unknown';
+    const form = formidable({ maxFileSize: 50 * 1024 * 1024 });
+    const [fields, files] = await form.parse(req);
 
-    if (!file || !(file instanceof File)) {
-      return Response.json({ error: 'No file provided' }, { status: 400 });
-    }
-    if (!displayName?.trim()) {
-      return Response.json({ error: 'Display name required' }, { status: 400 });
-    }
+    const file = files.file?.[0];
+    const displayName = fields.displayName?.[0];
+    const userName = fields.userName?.[0] || 'Unknown';
 
-    const safeName = sanitizeFilename(file.name);
+    if (!file) return res.status(400).json({ error: 'No file provided' });
+    if (!displayName?.trim()) return res.status(400).json({ error: 'Display name required' });
+
+    const buffer = await readFile(file.filepath);
+    const safeName = sanitizeFilename(file.originalFilename || 'file');
     const s3Key = `uploads/${Date.now()}_${safeName}`;
-    const buffer = await file.arrayBuffer();
 
-    await uploadToS3(s3Key, buffer, file.type || 'application/octet-stream');
+    await uploadToS3(s3Key, buffer, file.mimetype || 'application/octet-stream');
 
     const now = new Date().toISOString();
     const entry = {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       display_name: displayName.trim(),
-      original_name: file.name,
+      original_name: file.originalFilename || 'file',
       s3_key: s3Key,
-      content_type: file.type || 'application/octet-stream',
+      content_type: file.mimetype || 'application/octet-stream',
       size: file.size,
       uploaded_at: now,
       uploaded_by: userName,
@@ -45,8 +43,8 @@ export default async function handler(request) {
     };
 
     await insertFile(entry);
-    return Response.json(toClientFormat(entry), { status: 201 });
+    return res.status(201).json(toClientFormat(entry));
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return res.status(500).json({ error: err.message });
   }
 }

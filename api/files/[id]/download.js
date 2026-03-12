@@ -1,22 +1,16 @@
 import { getById, toClientFormat } from '../../_lib/db.js';
 import { getPresignedDownloadUrl } from '../../_lib/s3.js';
 
-export const config = { runtime: 'edge' };
-
-export default async function handler(request) {
-  if (request.method !== 'GET') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const url = new URL(request.url);
-    const id = url.pathname.split('/').at(-2);
-
+    const { id } = req.query;
     const row = await getById(id);
-    if (!row) return Response.json({ error: 'File not found' }, { status: 404 });
+    if (!row) return res.status(404).json({ error: 'File not found' });
 
-    const downloadUrl = await getPresignedDownloadUrl(row.s3_key, row.original_name);
-    return Response.json({ url: downloadUrl });
+    const url = await getPresignedDownloadUrl(row.s3_key, row.original_name);
+    return res.status(200).json({ url });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return res.status(500).json({ error: err.message });
   }
 }

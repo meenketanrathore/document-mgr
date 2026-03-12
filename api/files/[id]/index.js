@@ -1,24 +1,18 @@
 import { getById, deleteById } from '../../_lib/db.js';
 import { deleteFromS3 } from '../../_lib/s3.js';
 
-export const config = { runtime: 'edge' };
-
-export default async function handler(request) {
-  if (request.method !== 'DELETE') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const url = new URL(request.url);
-    const id = url.pathname.split('/').at(-1);
-
+    const { id } = req.query;
     const row = await getById(id);
-    if (!row) return Response.json({ error: 'File not found' }, { status: 404 });
+    if (!row) return res.status(404).json({ error: 'File not found' });
 
     await deleteFromS3(row.s3_key);
     await deleteById(id);
 
-    return Response.json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return res.status(500).json({ error: err.message });
   }
 }

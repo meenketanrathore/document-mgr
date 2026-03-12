@@ -1,25 +1,19 @@
 import { getById, renameFile, toClientFormat } from '../../_lib/db.js';
 
-export const config = { runtime: 'edge' };
-
-export default async function handler(request) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'PATCH') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const url = new URL(request.url);
-    const id = url.pathname.split('/').at(-2);
-
-    const { newName, userName } = await request.json();
-    if (!newName?.trim()) return Response.json({ error: 'New name required' }, { status: 400 });
+    const { id } = req.query;
+    const { newName, userName } = req.body;
+    if (!newName?.trim()) return res.status(400).json({ error: 'New name required' });
 
     const existing = await getById(id);
-    if (!existing) return Response.json({ error: 'File not found' }, { status: 404 });
+    if (!existing) return res.status(404).json({ error: 'File not found' });
 
     await renameFile(id, newName.trim(), userName || 'Unknown');
     const updated = await getById(id);
-    return Response.json(toClientFormat(updated));
+    return res.status(200).json(toClientFormat(updated));
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return res.status(500).json({ error: err.message });
   }
 }

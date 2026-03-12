@@ -1,12 +1,8 @@
 import { listS3Objects } from '../_lib/s3.js';
 import { allS3Keys, deleteByS3Key } from '../_lib/db.js';
 
-export const config = { runtime: 'edge' };
-
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
     const s3Keys = new Set(await listS3Objects());
     const dbKeys = new Set(await allS3Keys());
@@ -18,12 +14,12 @@ export default async function handler(request) {
 
     const orphanedInS3 = [...s3Keys].filter((k) => !dbKeys.has(k));
 
-    return Response.json({
+    return res.status(200).json({
       removedFromDb: orphanedInDb.length,
       orphanedInS3: orphanedInS3.length,
       orphanedS3Keys: orphanedInS3,
     });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return res.status(500).json({ error: err.message });
   }
 }
