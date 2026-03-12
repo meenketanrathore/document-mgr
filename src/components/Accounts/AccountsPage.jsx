@@ -95,7 +95,6 @@ function AccountsPage({ user }) {
       </div>
 
       <SummaryCards summary={summary} />
-      <AccountsCharts summary={summary} />
 
       <h3 className="section-heading">Transactions</h3>
       <TransactionList
@@ -106,6 +105,8 @@ function AccountsPage({ user }) {
         onFilterChange={setFilters}
         filters={filters}
       />
+
+      <AccountsCharts summary={summary} />
 
       <TransactionForm
         isOpen={formOpen}
