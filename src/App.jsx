@@ -5,6 +5,7 @@ import FileUpload from './components/FileUpload';
 import FileList from './components/FileList';
 import FloatingParticles from './components/FloatingParticles';
 import Login from './components/Login';
+import AccountsPage from './components/Accounts/AccountsPage';
 import { listFiles } from './api';
 import { useFilePolling } from './hooks/useFileEvents';
 import './App.css';
@@ -108,6 +109,16 @@ function App() {
             My Documents
             {files.length > 0 && <span className="badge">{files.length}</span>}
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'accounts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('accounts')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+            </svg>
+            Accounts
+          </button>
         </nav>
 
         <div className="tab-content" style={{ display: activeTab === 'upload' ? 'block' : 'none' }}>
@@ -141,6 +152,9 @@ function App() {
             }
             user={user}
           />
+        </div>
+        <div className="tab-content" style={{ display: activeTab === 'accounts' ? 'block' : 'none' }}>
+          <AccountsPage user={user} />
         </div>
       </main>
 

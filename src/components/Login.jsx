@@ -52,8 +52,8 @@ function Login({ onLogin }) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.15, duration: 0.4 }}
         />
-        <h2 className="login-title">Document Manager</h2>
-        <p className="login-subtitle">Sign in to access your documents</p>
+        <h2 className="login-title">Bandhanam Management</h2>
+        <p className="login-subtitle">Sign in to manage documents and accounts</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-field">

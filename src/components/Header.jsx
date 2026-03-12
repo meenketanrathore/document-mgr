@@ -19,7 +19,7 @@ function Header({ user, onLogout }) {
             transition={{ type: 'spring', stiffness: 300 }}
           />
           <div className="logo-text">
-            <span className="logo-subtitle">Document Manager</span>
+            <span className="logo-subtitle">Management Application</span>
           </div>
         </div>
 

@@ -42,8 +42,8 @@ describe('App', () => {
 
   it('renders the login page when not authenticated', () => {
     render(<App />);
-    expect(screen.getByText('Document Manager')).toBeInTheDocument();
-    expect(screen.getByText('Sign in to access your documents')).toBeInTheDocument();
+    expect(screen.getByText('Bandhanam Management')).toBeInTheDocument();
+    expect(screen.getByText('Sign in to manage documents and accounts')).toBeInTheDocument();
     expect(screen.getByLabelText('Select User')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
   });
@@ -63,6 +63,7 @@ describe('App', () => {
     render(<App />);
     expect(screen.getByText('Upload')).toBeInTheDocument();
     expect(screen.getByText(/My Documents/)).toBeInTheDocument();
+    expect(screen.getByText('Accounts')).toBeInTheDocument();
     expect(screen.getByText(/Bandhanam Private Limited/)).toBeInTheDocument();
   });
 });

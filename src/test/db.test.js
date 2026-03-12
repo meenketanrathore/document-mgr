@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toClientFormat } from '../../api/_lib/db.js';
+import { toClientFormat, toTransactionClientFormat } from '../../api/_lib/db.js';
 
 describe('Turso Database Helpers', () => {
   it('toClientFormat should map snake_case DB rows to camelCase client objects', () => {
@@ -53,5 +53,46 @@ describe('Turso Database Helpers', () => {
     expect(result).not.toHaveProperty('uploaded_by');
     expect(result).not.toHaveProperty('last_updated_by');
     expect(result).not.toHaveProperty('last_updated_at');
+  });
+});
+
+describe('Transaction Helpers', () => {
+  it('toTransactionClientFormat maps snake_case to camelCase', () => {
+    const row = {
+      id: 'txn-1',
+      type: 'expense',
+      date: '2026-03-10',
+      amount: 1500,
+      category: 'Rent',
+      description: 'Office rent',
+      payee_vendor: 'Landlord',
+      payment_mode: 'Bank Transfer',
+      receipt_file_id: null,
+      approved_by: 'Chemendra',
+      project_department: 'Admin',
+      transaction_details: 'Monthly rent',
+      created_by: 'Meenketan',
+      created_at: '2026-03-10T10:00:00.000Z',
+      updated_at: '2026-03-10T10:00:00.000Z',
+    };
+
+    const result = toTransactionClientFormat(row);
+
+    expect(result.id).toBe('txn-1');
+    expect(result.type).toBe('expense');
+    expect(result.amount).toBe(1500);
+    expect(result.payeeVendor).toBe('Landlord');
+    expect(result.paymentMode).toBe('Bank Transfer');
+    expect(result.approvedBy).toBe('Chemendra');
+    expect(result.projectDepartment).toBe('Admin');
+    expect(result.createdBy).toBe('Meenketan');
+    expect(result).not.toHaveProperty('payee_vendor');
+    expect(result).not.toHaveProperty('payment_mode');
+    expect(result).not.toHaveProperty('receipt_file_id');
+    expect(result).not.toHaveProperty('approved_by');
+    expect(result).not.toHaveProperty('project_department');
+    expect(result).not.toHaveProperty('created_by');
+    expect(result).not.toHaveProperty('created_at');
+    expect(result).not.toHaveProperty('updated_at');
   });
 });

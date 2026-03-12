@@ -99,3 +99,128 @@ export async function insertMany(entries) {
   }));
   return client.batch(stmts);
 }
+
+// --- Transaction helpers ---
+
+export function toTransactionClientFormat(row) {
+  return {
+    id: row.id,
+    type: row.type,
+    date: row.date,
+    amount: row.amount,
+    category: row.category,
+    description: row.description,
+    payeeVendor: row.payee_vendor,
+    paymentMode: row.payment_mode,
+    receiptFileId: row.receipt_file_id,
+    approvedBy: row.approved_by,
+    projectDepartment: row.project_department,
+    transactionDetails: row.transaction_details,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function listTransactions(filters = {}) {
+  const client = getClient();
+  let sql = 'SELECT * FROM transactions WHERE 1=1';
+  const args = [];
+
+  if (filters.type) {
+    sql += ' AND type = ?';
+    args.push(filters.type);
+  }
+  if (filters.category) {
+    sql += ' AND category = ?';
+    args.push(filters.category);
+  }
+  if (filters.year) {
+    sql += " AND strftime('%Y', date) = ?";
+    args.push(String(filters.year));
+  }
+  if (filters.month) {
+    sql += " AND strftime('%m', date) = ?";
+    args.push(String(filters.month).padStart(2, '0'));
+  }
+
+  sql += ' ORDER BY date DESC, created_at DESC';
+  const result = await client.execute({ sql, args });
+  return result.rows.map(toTransactionClientFormat);
+}
+
+export async function getTransactionById(id) {
+  const client = getClient();
+  const result = await client.execute({ sql: 'SELECT * FROM transactions WHERE id = ?', args: [id] });
+  return result.rows[0] || null;
+}
+
+export async function insertTransaction(entry) {
+  const client = getClient();
+  return client.execute({
+    sql: `INSERT INTO transactions (id, type, date, amount, category, description, payee_vendor, payment_mode, receipt_file_id, approved_by, project_department, transaction_details, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      entry.id, entry.type, entry.date, entry.amount, entry.category,
+      entry.description, entry.payee_vendor, entry.payment_mode,
+      entry.receipt_file_id, entry.approved_by, entry.project_department,
+      entry.transaction_details, entry.created_by, entry.created_at, entry.updated_at,
+    ],
+  });
+}
+
+export async function updateTransaction(id, fields) {
+  const client = getClient();
+  const sets = [];
+  const args = [];
+  const allowed = ['type', 'date', 'amount', 'category', 'description', 'payee_vendor', 'payment_mode', 'receipt_file_id', 'approved_by', 'project_department', 'transaction_details'];
+
+  for (const key of allowed) {
+    if (fields[key] !== undefined) {
+      sets.push(`${key} = ?`);
+      args.push(fields[key]);
+    }
+  }
+  if (sets.length === 0) return;
+
+  sets.push('updated_at = ?');
+  args.push(new Date().toISOString());
+  args.push(id);
+
+  return client.execute({ sql: `UPDATE transactions SET ${sets.join(', ')} WHERE id = ?`, args });
+}
+
+export async function deleteTransaction(id) {
+  const client = getClient();
+  return client.execute({ sql: 'DELETE FROM transactions WHERE id = ?', args: [id] });
+}
+
+export async function getTransactionSummary(year) {
+  const client = getClient();
+  const yearFilter = year ? String(year) : new Date().getFullYear().toString();
+
+  const totals = await client.execute({
+    sql: `SELECT type, SUM(amount) as total FROM transactions WHERE strftime('%Y', date) = ? GROUP BY type`,
+    args: [yearFilter],
+  });
+
+  const monthly = await client.execute({
+    sql: `SELECT strftime('%m', date) as month, type, SUM(amount) as total
+          FROM transactions WHERE strftime('%Y', date) = ?
+          GROUP BY month, type ORDER BY month`,
+    args: [yearFilter],
+  });
+
+  const byCategory = await client.execute({
+    sql: `SELECT category, type, SUM(amount) as total
+          FROM transactions WHERE strftime('%Y', date) = ?
+          GROUP BY category, type ORDER BY total DESC`,
+    args: [yearFilter],
+  });
+
+  return {
+    totals: totals.rows.map((r) => ({ type: r.type, total: r.total })),
+    monthly: monthly.rows.map((r) => ({ month: r.month, type: r.type, total: r.total })),
+    byCategory: byCategory.rows.map((r) => ({ category: r.category, type: r.type, total: r.total })),
+  };
+}

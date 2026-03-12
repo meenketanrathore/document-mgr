@@ -25,4 +25,24 @@ describe('API Module Exports', () => {
   it('should export syncFiles function', () => {
     expect(typeof api.syncFiles).toBe('function');
   });
+
+  it('should export listTransactions function', () => {
+    expect(typeof api.listTransactions).toBe('function');
+  });
+
+  it('should export createTransaction function', () => {
+    expect(typeof api.createTransaction).toBe('function');
+  });
+
+  it('should export updateTransaction function', () => {
+    expect(typeof api.updateTransaction).toBe('function');
+  });
+
+  it('should export deleteTransaction function', () => {
+    expect(typeof api.deleteTransaction).toBe('function');
+  });
+
+  it('should export getTransactionSummary function', () => {
+    expect(typeof api.getTransactionSummary).toBe('function');
+  });
 });

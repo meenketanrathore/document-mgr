@@ -65,3 +65,50 @@ export async function syncFiles() {
   if (!res.ok) throw new Error('Sync failed');
   return res.json();
 }
+
+// --- Transaction API ---
+
+export async function listTransactions(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.type) params.set('type', filters.type);
+  if (filters.month) params.set('month', filters.month);
+  if (filters.year) params.set('year', filters.year);
+  if (filters.category) params.set('category', filters.category);
+  const qs = params.toString();
+  const res = await fetch(`${API_BASE}/transactions${qs ? `?${qs}` : ''}`);
+  if (!res.ok) throw new Error('Failed to fetch transactions');
+  return res.json();
+}
+
+export async function createTransaction(data) {
+  const res = await fetch(`${API_BASE}/transactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create transaction');
+  return res.json();
+}
+
+export async function updateTransaction(id, data) {
+  const res = await fetch(`${API_BASE}/transactions/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update transaction');
+  return res.json();
+}
+
+export async function deleteTransaction(id) {
+  const res = await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete transaction');
+  return res.json();
+}
+
+export async function getTransactionSummary(year) {
+  const params = year ? `?year=${year}` : '';
+  const res = await fetch(`${API_BASE}/transactions/summary${params}`);
+  if (!res.ok) throw new Error('Failed to fetch summary');
+  return res.json();
+}
