@@ -122,6 +122,56 @@
   box-shadow: 0 0 0 3px rgba(26, 127, 100, 0.1);
 }
 
+.receipt-upload-area {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--color-bg);
+}
+.receipt-upload-area:hover {
+  border-color: var(--color-primary);
+  background: rgba(26, 127, 100, 0.03);
+}
+
+.receipt-placeholder,
+.receipt-selected,
+.receipt-existing {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.receipt-selected {
+  color: var(--color-text);
+}
+.receipt-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.receipt-remove-btn {
+  border: none;
+  background: none;
+  color: var(--color-text-dim);
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+.receipt-remove-btn:hover {
+  color: var(--color-danger);
+  background: rgba(220, 38, 38, 0.08);
+}
+.receipt-existing {
+  color: var(--color-success);
+}
+
 .txn-submit-btn {
   margin-top: 0.5rem;
   padding: 0.85rem;

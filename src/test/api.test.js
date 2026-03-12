@@ -45,4 +45,12 @@ describe('API Module Exports', () => {
   it('should export getTransactionSummary function', () => {
     expect(typeof api.getTransactionSummary).toBe('function');
   });
+
+  it('should export uploadReceipt function', () => {
+    expect(typeof api.uploadReceipt).toBe('function');
+  });
+
+  it('should export getReceiptDownloadUrl function', () => {
+    expect(typeof api.getReceiptDownloadUrl).toBe('function');
+  });
 });

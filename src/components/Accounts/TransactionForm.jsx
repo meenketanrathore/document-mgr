@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { uploadReceipt } from '../../api';
 import './TransactionForm.css';
 
 const INCOME_CATEGORIES = ['Sales', 'Services', 'Investment Returns', 'Consulting', 'Other Income'];
@@ -20,6 +22,9 @@ function TransactionForm({ isOpen, onClose, onSubmit, editData, user }) {
     projectDepartment: '',
     transactionDetails: '',
   });
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (editData) {
@@ -35,8 +40,10 @@ function TransactionForm({ isOpen, onClose, onSubmit, editData, user }) {
         projectDepartment: editData.projectDepartment || '',
         transactionDetails: editData.transactionDetails || '',
       });
+      setReceiptFile(null);
     } else {
       setForm((f) => ({ ...f, type: 'expense', category: '', amount: '', description: '', payeeVendor: '', paymentMode: '', approvedBy: '', projectDepartment: '', transactionDetails: '' }));
+      setReceiptFile(null);
     }
   }, [editData, isOpen]);
 
@@ -48,10 +55,25 @@ function TransactionForm({ isOpen, onClose, onSubmit, editData, user }) {
     if (name === 'type') setForm((f) => ({ ...f, [name]: value, category: '' }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.amount || !form.category || !form.date) return;
-    onSubmit({ ...form, amount: Number(form.amount), createdBy: user });
+
+    setUploading(true);
+    try {
+      let receiptFileId = editData?.receiptFileId || null;
+
+      if (receiptFile) {
+        const result = await uploadReceipt(receiptFile);
+        receiptFileId = result.s3Key;
+      }
+
+      await onSubmit({ ...form, amount: Number(form.amount), createdBy: user, receiptFileId });
+    } catch {
+      toast.error('Failed to save transaction');
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -140,8 +162,48 @@ function TransactionForm({ isOpen, onClose, onSubmit, editData, user }) {
               </div>
             </div>
 
-            <button type="submit" className="txn-submit-btn" disabled={!form.amount || !form.category || !form.date}>
-              {editData ? 'Update Transaction' : 'Add Transaction'}
+            <div className="txn-field">
+              <label>Attach Proof / Receipt</label>
+              <div className="receipt-upload-area" onClick={() => fileInputRef.current?.click()}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                  onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                  style={{ display: 'none' }}
+                />
+                {receiptFile ? (
+                  <div className="receipt-selected">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span className="receipt-file-name">{receiptFile.name}</span>
+                    <button type="button" className="receipt-remove-btn" onClick={(e) => { e.stopPropagation(); setReceiptFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : editData?.receiptFileId ? (
+                  <div className="receipt-existing">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Proof already attached (click to replace)</span>
+                  </div>
+                ) : (
+                  <div className="receipt-placeholder">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Click to upload proof (image, PDF, doc)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button type="submit" className="txn-submit-btn" disabled={!form.amount || !form.category || !form.date || uploading}>
+              {uploading ? 'Uploading...' : editData ? 'Update Transaction' : 'Add Transaction'}
             </button>
           </form>
         </motion.div>

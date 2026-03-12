@@ -112,3 +112,21 @@ export async function getTransactionSummary(year) {
   if (!res.ok) throw new Error('Failed to fetch summary');
   return res.json();
 }
+
+export async function uploadReceipt(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE}/transactions/upload-receipt`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Receipt upload failed');
+  return res.json();
+}
+
+export async function getReceiptDownloadUrl(s3Key) {
+  const res = await fetch(`${API_BASE}/transactions/receipt-download?key=${encodeURIComponent(s3Key)}`);
+  if (!res.ok) throw new Error('Failed to get receipt URL');
+  const data = await res.json();
+  return data.url;
+}
