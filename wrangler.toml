@@ -1,9 +1,0 @@
-name = "bandhanam-doc"
-compatibility_date = "2024-09-01"
-pages_build_output_dir = "dist"
-
-# D1 database binding - update database_id after creating the D1 database
-[[d1_databases]]
-binding = "DB"
-database_name = "bandhanam-files"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"

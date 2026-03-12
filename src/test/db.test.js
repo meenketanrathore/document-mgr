@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { toClientFormat } from '../../functions/_lib/db.js';
+import { toClientFormat } from '../../api/_lib/db.js';
 
-describe('D1 Database Helpers', () => {
+describe('Turso Database Helpers', () => {
   it('toClientFormat should map snake_case DB rows to camelCase client objects', () => {
     const row = {
       id: 'test-1',

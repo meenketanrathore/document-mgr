@@ -1,14 +1,19 @@
-import { getLegacyMetadata } from '../../_lib/s3.js';
-import { fileCount, insertMany } from '../../_lib/db.js';
+import { getLegacyMetadata } from '../_lib/s3.js';
+import { fileCount, insertMany } from '../_lib/db.js';
 
-export async function onRequestPost(context) {
+export const config = { runtime: 'edge' };
+
+export default async function handler(request) {
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  }
   try {
-    const count = await fileCount(context.env.DB);
+    const count = await fileCount();
     if (count > 0) {
-      return Response.json({ message: `D1 already has ${count} files. Skipping migration.` });
+      return Response.json({ message: `Database already has ${count} files. Skipping migration.` });
     }
 
-    const legacy = await getLegacyMetadata(context.env);
+    const legacy = await getLegacyMetadata();
     if (!legacy?.files?.length) {
       return Response.json({ message: 'No legacy _metadata.json found in S3.' });
     }
@@ -26,8 +31,8 @@ export async function onRequestPost(context) {
       last_updated_at: f.lastUpdatedAt || new Date().toISOString(),
     }));
 
-    await insertMany(context.env.DB, entries);
-    return Response.json({ message: `Imported ${entries.length} file(s) from _metadata.json into D1.` });
+    await insertMany(entries);
+    return Response.json({ message: `Imported ${entries.length} file(s) from _metadata.json.` });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }

@@ -6,7 +6,6 @@ data/
 .env.*.local
 *.log
 .DS_Store
-.netlify/
-.wrangler/
+.vercel/
 .vscode/
 .specstory/
