@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import SummaryCards from './SummaryCards';
 import AccountsCharts from './AccountsCharts';
+import ExpenseSplit from './ExpenseSplit';
 import TransactionForm from './TransactionForm';
 import TransactionList from './TransactionList';
 import { listTransactions, createTransaction, updateTransaction, deleteTransaction, getTransactionSummary } from '../../api';
@@ -134,6 +135,8 @@ function AccountsPage({ user }) {
       />
 
       <AccountsCharts summary={summary} />
+
+      <ExpenseSplit summary={summary} />
 
       <TransactionForm
         isOpen={formOpen}
